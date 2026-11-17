@@ -21,8 +21,8 @@ const numberEnv = (name, fallback, min, max) => {
   return Number.isFinite(n) && n >= min ? Math.min(Math.trunc(n), max) : fallback;
 };
 // No MAX_ITEMS limit. The old Worker can continue sending max_items='72': it is ignored.
-const CONCURRENCY = numberEnv('SCAN_CONCURRENCY', 4, 1, 6);
-const SPACING_MS = numberEnv('REQUEST_SPACING_MS', 450, 300, 10000);
+const CONCURRENCY = numberEnv('SCAN_CONCURRENCY', 10, 1, 20);
+const SPACING_MS = numberEnv('REQUEST_SPACING_MS', 300, 100, 10000);
 const CHUNK_SIZE = numberEnv('CHECKPOINT_SIZE', 80, 10, 120);
 const MAX_RUNTIME_MINUTES = numberEnv('MAX_RUNTIME_MINUTES', 315, 5, 325);
 const CATALOG_TTL_MS = 15 * 60 * 1000;
