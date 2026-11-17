@@ -46,8 +46,8 @@ jobs:
         env:
           FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
           FORCE_CATALOG_REFRESH: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'sync' && '1' || '0' }}
-          SCAN_CONCURRENCY: '10'
-          REQUEST_SPACING_MS: '300'
+          SCAN_CONCURRENCY: '15'
+          REQUEST_SPACING_MS: '200'
           CHECKPOINT_SIZE: '80'
           MAX_RUNTIME_MINUTES: '315'
         run: npm run sync
