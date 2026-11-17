@@ -48,6 +48,6 @@ jobs:
           FORCE_CATALOG_REFRESH: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'sync' && '1' || '0' }}
           SCAN_CONCURRENCY: '15'
           REQUEST_SPACING_MS: '100'
-          CHECKPOINT_SIZE: '80'
+          CHECKPOINT_SIZE: '100'
           MAX_RUNTIME_MINUTES: '315'
         run: npm run sync
