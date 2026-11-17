@@ -16,6 +16,12 @@
     .sub{color:var(--soft);margin:7px 0 0;font-size:12px}
     .meta{text-align:right;font-size:11px;color:var(--soft);white-space:nowrap;padding-bottom:3px}
     .meta strong{display:block;font-size:12px;color:var(--ink);font-weight:600;margin-bottom:4px}
+    .header-right{display:flex;flex-direction:column;gap:9px;align-items:flex-end;flex-shrink:0}
+    .sync-link{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:1px solid #7561af;background:#393052;color:#f6f0ff;text-decoration:none;border-radius:10px;padding:9px 13px;font-size:12px;font-weight:750;transition:background .15s}
+    .sync-link:hover,.sync-link:focus-visible{background:#4f4077;outline-offset:3px}
+    .manual-hint{max-width:265px;font-size:10px;color:var(--muted);text-align:right;line-height:1.4}
+    @media(max-width:720px){.header-right{align-items:flex-start}.manual-hint{text-align:left}.sync-link{padding:8px 12px}}
+    @media(max-width:465px){.header-right{width:100%}}
     .dot{display:inline-block;width:7px;height:7px;background:#e6be71;border-radius:50%;margin-right:6px;vertical-align:middle}
     .dot.ok{background:#76d4ac}.dot.err{background:#fc8585}
     .notice{margin:0 0 14px;border:1px solid #604148;background:#312126;border-radius:10px;color:#ffd4dc;padding:9px 12px;font-size:12px;display:none}.notice.visible{display:block}
@@ -55,9 +61,13 @@
         <h1>가장 많이 민팅한 사람은? <span>TOP 5</span></h1>
         <p class="sub">멤버별 CC372Z · CC373Z · CC374Z 합산 · 최초 수령 기록 기준</p>
       </div>
-      <div class="meta" aria-live="polite">
-        <strong><span class="dot" id="dot"></span><span id="connection">Firebase 연결 중</span></strong>
-        <span id="updated">마지막 집계 확인 중</span>
+      <div class="header-right">
+        <div class="meta" aria-live="polite">
+          <strong><span class="dot" id="dot"></span><span id="connection">Firebase 연결 중</span></strong>
+          <span id="updated">마지막 집계 확인 중</span>
+        </div>
+        <a class="sync-link" href="https://github.com/heonilover/object-mint-ranking/actions/workflows/sync.yml" target="_blank" rel="noopener noreferrer" aria-label="GitHub Actions에서 지금 새 민팅 데이터 수집 실행">↻ 지금 수집 실행 ↗</a>
+        <div class="manual-hint">GitHub 로그인 후 Run workflow → mode: sync → Run workflow<br>수집 완료 시 랭킹은 Firebase에서 자동 반영됩니다.</div>
       </div>
     </header>
     <div id="notice" class="notice" role="status"></div>
