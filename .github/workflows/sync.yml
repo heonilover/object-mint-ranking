@@ -1,22 +1,22 @@
 name: Update objekt purchase rankings
 on:
   schedule:
-    # About every 15 minutes (UTC); GitHub may delay scheduled runs.
+    # New mint scans about every 15 minutes. GitHub may delay scheduled jobs.
     - cron: '7,22,37,52 * * * *'
   workflow_dispatch:
     inputs:
       mode:
-        description: 'probe = read-only API test; sync = save new receivers'
+        description: 'probe = API test; sync = collect entire missing backlog'
         required: true
         type: choice
         options: [probe, sync]
-        default: probe
+        default: sync
       serial:
         description: 'serial for probe'
         required: false
         default: '1'
       max_items:
-        description: 'new serials per manual sync (72 recommended; max 150)'
+        description: 'Legacy parameter (ignored by full sync; kept for Worker compatibility)'
         required: false
         default: '72'
 concurrency:
@@ -25,7 +25,7 @@ concurrency:
 jobs:
   scan:
     runs-on: ubuntu-latest
-    timeout-minutes: 14
+    timeout-minutes: 330
     permissions:
       contents: read
     steps:
@@ -41,11 +41,13 @@ jobs:
         env:
           SERIAL: ${{ inputs.serial }}
         run: npm run probe
-      - name: Scan & save to Firebase
+      - name: Full backlog scan and checkpoint to Firebase
         if: github.event_name == 'schedule' || inputs.mode == 'sync'
         env:
           FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
-          MAX_ITEMS: ${{ inputs.max_items || '24' }}
           FORCE_CATALOG_REFRESH: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'sync' && '1' || '0' }}
-          REQUEST_DELAY_MS: '1300'
+          SCAN_CONCURRENCY: '4'
+          REQUEST_SPACING_MS: '450'
+          CHECKPOINT_SIZE: '80'
+          MAX_RUNTIME_MINUTES: '315'
         run: npm run sync
