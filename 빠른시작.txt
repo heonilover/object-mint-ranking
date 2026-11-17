@@ -1,0 +1,16 @@
+OBJΞKT 랭킹 사이트 · 무료 버전 (GitHub Pages + Firebase Firestore)
+
+1. Firebase에서 Spark 프로젝트 및 Firestore를 만들고 firestore.rules를 게시합니다.
+2. Firebase 웹 앱 설정을 docs/config.js에 복사합니다.
+3. GitHub에 이 프로젝트 파일 전체를 업로드합니다.
+4. GitHub 저장소 설정에서 Pages → main /docs 를 선택합니다.
+5. Firebase 서비스 계정 JSON은 GitHub Actions Secret
+   FIREBASE_SERVICE_ACCOUNT_JSON에만 저장합니다. 공개 코드에 넣지 마세요.
+6. Actions → Update objekt purchase rankings → Run workflow → probe를 먼저 실행합니다.
+7. 실제 API 호출이 성공하면 mode sync를 실행합니다. 이후 예약 수집을 사용합니다.
+
+사이트 주소: https://깃허브아이디.github.io/저장소명/
+실제 API 조회는 아직 별도 검증 필요. 완료 전 순위는 잠정치.
+처음부터 끝까지 무료 한도 내 이용을 전제로 설계. 클라우드 유료 업그레이드 불필요.
+
+자세한 단계는 README.md 참고.

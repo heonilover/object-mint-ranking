@@ -1,0 +1,13 @@
+Firebase 웹 앱 설정값을 docs/config.js에 연결해 두었습니다.
+Firebase Project ID: object-mint-ranking
+
+다음 단계:
+1. GitHub에서 새로운 공개 저장소를 만듭니다(예: objekt-mint-ranking).
+2. ZIP 압축을 푼 뒤, 최상위의 docs, src, scripts, .github, package.json 등 모든 내용을 저장소 루트에 올립니다.
+3. Settings > Pages > Build and deployment > Deploy from a branch > main /docs > Save
+4. Settings > Pages에 표시된 사이트 주소로 접속합니다. 처음에는 수집 데이터가 없으므로 0장으로 표시됩니다.
+5. 자동 수집을 위해 GitHub Actions의 probe 실행으로 실제 objekt.top API 조회를 먼저 검증합니다.
+6. probe가 성공하면 GitHub Actions Secret에 Firebase 서비스 계정 JSON을 입력하고 sync를 시작합니다. 민감한 비공개 키는 코드와 채팅에 넣지 마세요.
+
+주의: 웹 설정값만 연결한 상태입니다. Firestore에 실제 구매량 데이터가 들어간 것은 아닙니다.
+objekt.top API 실서버 연결 검증은 아직 진행되지 않았습니다.

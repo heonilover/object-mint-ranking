@@ -1,0 +1,9 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Public read-only data for an unlisted, shared-link site.
+    match /public/status { allow read: if true; allow write: if false; }
+    match /rankShards/{shardId} { allow read: if true; allow write: if false; }
+    match /{document=**} { allow read, write: if false; }
+  }
+}
