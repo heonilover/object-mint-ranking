@@ -81,7 +81,7 @@
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js';
   import { getFirestore, collection, doc, onSnapshot } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js';
   import { firebaseConfig } from './config.js';
-  import { REFRESH_API_URL } from './refresh-config.js';
+  const REFRESH_API_URL = 'https://objekt-ranking-refresh.pespor2.workers.dev';
 
   // These member keys match the backend's src/collections.mjs slug convention.
   const members = [
