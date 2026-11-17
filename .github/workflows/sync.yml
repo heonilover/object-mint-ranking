@@ -1,8 +1,7 @@
-
 name: Update objekt purchase rankings
-
 on:
   schedule:
+    # About every 15 minutes (UTC); GitHub may delay scheduled runs.
     - cron: '7,22,37,52 * * * *'
   workflow_dispatch:
     inputs:
@@ -17,14 +16,12 @@ on:
         required: false
         default: '1'
       max_items:
-        description: 'max new serials for sync'
+        description: 'new serials per manual sync (72 recommended; max 150)'
         required: false
         default: '72'
-
 concurrency:
   group: objekt-ranking-collector
   cancel-in-progress: false
-
 jobs:
   scan:
     runs-on: ubuntu-latest
@@ -36,18 +33,19 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: npm install --no-audit --no-fund
-
+      - name: Install dependencies for sync
+        if: github.event_name == 'schedule' || inputs.mode == 'sync'
+        run: npm install --no-audit --no-fund
       - name: Probe only (no Firebase writes)
         if: github.event_name == 'workflow_dispatch' && inputs.mode == 'probe'
         env:
           SERIAL: ${{ inputs.serial }}
         run: npm run probe
-
       - name: Scan & save to Firebase
         if: github.event_name == 'schedule' || inputs.mode == 'sync'
         env:
           FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
-          MAX_ITEMS: ${{ inputs.max_items || '72' }}
-          REQUEST_DELAY_MS: '1050'
+          MAX_ITEMS: ${{ inputs.max_items || '24' }}
+          FORCE_CATALOG_REFRESH: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'sync' && '1' || '0' }}
+          REQUEST_DELAY_MS: '1300'
         run: npm run sync
