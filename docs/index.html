@@ -17,9 +17,12 @@
     .meta{text-align:right;font-size:11px;color:var(--soft);white-space:nowrap;padding-bottom:3px}
     .meta strong{display:block;font-size:12px;color:var(--ink);font-weight:600;margin-bottom:4px}
     .header-right{display:flex;flex-direction:column;gap:9px;align-items:flex-end;flex-shrink:0}
-    .sync-link{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:1px solid #7561af;background:#393052;color:#f6f0ff;text-decoration:none;border-radius:10px;padding:9px 13px;font-size:12px;font-weight:750;transition:background .15s}
+    .sync-link{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:1px solid #7561af;background:#393052;color:#f6f0ff;border-radius:10px;padding:9px 13px;font-size:12px;font-weight:750;transition:background .15s;cursor:pointer;font-family:inherit}
     .sync-link:hover,.sync-link:focus-visible{background:#4f4077;outline-offset:3px}
-    .manual-hint{max-width:265px;font-size:10px;color:var(--muted);text-align:right;line-height:1.4}
+    .sync-link:disabled{cursor:progress;opacity:.62}
+    .manual-hint{max-width:310px;font-size:10px;color:var(--muted);text-align:right;line-height:1.4}
+    .manual-hint.error{color:#fc9999}
+    .manual-hint.ok{color:#81dab4}
     @media(max-width:720px){.header-right{align-items:flex-start}.manual-hint{text-align:left}.sync-link{padding:8px 12px}}
     @media(max-width:465px){.header-right{width:100%}}
     .dot{display:inline-block;width:7px;height:7px;background:#e6be71;border-radius:50%;margin-right:6px;vertical-align:middle}
@@ -66,8 +69,8 @@
           <strong><span class="dot" id="dot"></span><span id="connection">Firebase 연결 중</span></strong>
           <span id="updated">마지막 집계 확인 중</span>
         </div>
-        <a class="sync-link" href="https://github.com/heonilover/object-mint-ranking/actions/workflows/sync.yml" target="_blank" rel="noopener noreferrer" aria-label="GitHub Actions에서 지금 새 민팅 데이터 수집 실행">↻ 지금 수집 실행 ↗</a>
-        <div class="manual-hint">GitHub 로그인 후 Run workflow → mode: sync → Run workflow<br>수집 완료 시 랭킹은 Firebase에서 자동 반영됩니다.</div>
+        <button type="button" class="sync-link" id="refreshNowBtn" aria-label="현재 페이지에서 신규 오브젝트 데이터 수집 요청">↻ 지금 업데이트</button>
+        <div class="manual-hint" id="refreshStatus" role="status" aria-live="polite">새 기록은 자동으로 수집되며, 직접 수집을 요청할 수도 있어요.</div>
       </div>
     </header>
     <div id="notice" class="notice" role="status"></div>
@@ -78,6 +81,7 @@
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js';
   import { getFirestore, collection, doc, onSnapshot } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js';
   import { firebaseConfig } from './config.js';
+  import { REFRESH_API_URL } from './refresh-config.js';
 
   // These member keys match the backend's src/collections.mjs slug convention.
   const members = [
@@ -94,7 +98,7 @@
   ].map(([name,english,key,number]) => ({name,english,key,number,slugs:[372,373,374].map(n=>`cream02-${key}-${n}z`)}));
   const $ = id => document.getElementById(id);
   const nfmt = n => Math.max(0,Number(n)||0).toLocaleString('ko-KR');
-  const state = {shards:new Map(),status:null,shardsLoaded:false,statusLoaded:false,failed:false};
+  const state = {shards:new Map(),status:null,shardsLoaded:false,statusLoaded:false,failed:false,refreshRequestedAt:0,refreshPending:false};
   const nodes = new Map();
   
   function el(tag, cls, value) {
@@ -184,6 +188,12 @@
       $('dot').className='dot ok';
       $('connection').textContent=relevant?'Firestore 연결됨':'Firestore 연결됨 · 신규 수집 대기';
     }
+    if (state.refreshPending && Number.isFinite(Date.parse(state.status?.lastRunAt || ''))) {
+      if (Date.parse(state.status.lastRunAt) >= state.refreshRequestedAt - 3000) {
+        state.refreshPending=false;
+        setRefreshMessage('수집 작업이 끝나 Firebase 결과를 반영했어요. 새 수집량: '+nfmt(state.status?.latestBatch)+'장','ok');
+      }
+    }
     const errors=(state.status?.errors||[]).filter(t=>members.some(m=>t.includes(m.name) || m.slugs.some(s=>t.includes(s))));
     const notice=$('notice');
     if(errors.length && ready){notice.textContent='수집 오류: '+errors[0];notice.classList.add('visible');}
@@ -195,6 +205,57 @@
     $('connection').textContent='Firebase 연결 실패';
     const notice=$('notice');notice.textContent=message;notice.classList.add('visible');
   }
+
+  // A Cloudflare Worker is needed only for safely triggering GitHub Actions.
+  // Never put a GitHub token in this public site.
+  const refreshButton=$('refreshNowBtn');
+  function setRefreshMessage(message,kind='') {
+    const node=$('refreshStatus');
+    node.textContent=message;
+    node.className='manual-hint'+(kind?' '+kind:'');
+  }
+  refreshButton.addEventListener('click',async()=>{
+    if(!REFRESH_API_URL || !/^https:\/\/[^/]+/.test(REFRESH_API_URL)) {
+      setRefreshMessage('수동 갱신 주소가 아직 설정되지 않았어요. refresh-config.js 설정이 필요합니다.','error');
+      return;
+    }
+    refreshButton.disabled=true;
+    refreshButton.textContent='↻ 수집 요청 중…';
+    setRefreshMessage('신규 시리얼 수집을 요청하고 있어요.');
+    try {
+      const response=await fetch(REFRESH_API_URL,{
+        method:'POST',
+        mode:'cors',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({}),
+        cache:'no-store'
+      });
+      const data=await response.json().catch(()=>({}));
+      if(response.status===429 && data.busy){
+        setRefreshMessage(data.message || '수집 중이므로 새 실행을 만들지 않았어요.','ok');
+        refreshButton.disabled=false;
+        refreshButton.textContent='↻ 지금 업데이트';
+        return;
+      }
+      if(!response.ok || !data.ok){
+        throw new Error(data.error || 'HTTP '+response.status);
+      }
+      state.refreshRequestedAt=Date.now();
+      state.refreshPending=true;
+      setRefreshMessage('요청 완료! 수집 작업이 실행되면 새 기록이 Firebase에 저장되고 순위에 자동 반영돼요.','ok');
+      // Keep duplicate button presses away while a job is likely running.
+      setTimeout(()=>{
+        refreshButton.disabled=false;
+        refreshButton.textContent='↻ 지금 업데이트';
+        if(state.refreshPending)setRefreshMessage('수집 대기 또는 진행 중이에요. 저장되면 이 화면에 자동 반영됩니다.');
+      },90000);
+    }catch(e){
+      refreshButton.disabled=false;
+      refreshButton.textContent='↻ 지금 업데이트';
+      setRefreshMessage('요청 실패: '+String(e?.message||e)+' · 수집 작업은 시작되지 않았을 수 있어요.','error');
+    }
+  });
+
   if(!firebaseConfig?.projectId || !firebaseConfig?.appId){ error('Firebase 웹 앱 설정이 비어 있습니다. docs/config.js를 확인하세요.'); }
   else {
     try {
