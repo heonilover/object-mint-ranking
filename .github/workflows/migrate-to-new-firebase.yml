@@ -1,0 +1,24 @@
+name: One-time copy to temporary Firebase
+on:
+  workflow_dispatch:
+concurrency:
+  group: objekt-ranking-collector
+  cancel-in-progress: false
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Firebase admin dependencies
+        run: npm install --no-audit --no-fund
+      - name: Copy rankings and scan progress, excluding bulky serial receipts
+        env:
+          FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+          FIREBASE_SERVICE_ACCOUNT_JSON_NEW: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON_NEW }}
+        run: node scripts/migrate-to-new-firebase.mjs
