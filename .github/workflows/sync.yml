@@ -44,7 +44,7 @@ jobs:
       - name: Full backlog scan and checkpoint to Firebase
         if: github.event_name == 'schedule' || inputs.mode == 'sync'
         env:
-          FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+          FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON_NEW }}
           FORCE_CATALOG_REFRESH: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'sync' && '1' || '0' }}
           SCAN_CONCURRENCY: '15'
           REQUEST_SPACING_MS: '100'
