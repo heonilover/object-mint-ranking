@@ -248,7 +248,7 @@
         refreshButton.disabled=false;
         refreshButton.textContent='↻ 지금 업데이트';
         if(state.refreshPending)setRefreshMessage('수집 대기 또는 진행 중이에요. 저장되면 이 화면에 자동 반영됩니다.');
-      },90000);
+      },10000);
     }catch(e){
       refreshButton.disabled=false;
       refreshButton.textContent='↻ 지금 업데이트';
